@@ -622,7 +622,7 @@ db ()
 	[ "$pct_utl" -ge "${1:-$DB_WARNING}"  ] && status="Warning"
 	[ "$pct_utl" -ge "${2:-$DB_CRITICAL}" ] && status="Critical"
 
-	_tsmmonitor_tool myecho db "database utilization $pct_utl%, $status"
+    _tsmmonitor_tool myecho db "database utilization $pct_utl%, $status | 'database utilization'=$pct_utl%;$DB_WARNING;$DB_CRITICAL"
 }
 
 
