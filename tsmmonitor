@@ -42,14 +42,9 @@
 #           warning..: 85
 #           critical.: 90
 #
-#        Usage..: tsmmonitor db [options] [warning] [critical]
-#
-#                 -v6     check database utilization for TSM version 6
-#
 #        Usage..: tsmmonitor db [warning] [critical]
 #        Example: tsmmonitor db
 #                 tsmmonitor db 80 95
-#                 tsmmonitor db -v6 80 90
 #
 #   The status returned from db check depends on the warning and critical
 #   threshold values. These values can be customized using command line
@@ -120,7 +115,6 @@
 #   Example:
 #       tsmmonitor db --help
 #       tsmmonitor db
-#       tsmmonitor db -v6
 #       tsmmonitor -m='user1@somewhere.com user2@somewhere.com' db
 #       tsmmonitor --servername=tsmsrv01 db
 #       tsmmonitor --servername=tsmsrv02 db 85 95
@@ -182,6 +176,14 @@ PASS=''
 #DSM_LOG=/home/nagios
 #export DSM_LOG
 
+# determine if v6 compatibility is needed
+echo | dsmadmc 2>/dev/null | grep Version\ 6 >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+    V6=1
+else
+    V6=0
+fi
+
 ##############################
 ########## send notification #
 ##############################
@@ -211,8 +213,8 @@ SHOW_CHECK_SOURCE=0 # do not edit here, please use --source
 ########## program information #
 ################################
 #
-URL='http://thobias.org/tsm'
-VERSION='2.2'
+URL='https://github.com/wwest4/tsmmonitor'
+VERSION='2.2.1'
 
 #####################################################################
 ########## default check threshold                                  #
@@ -330,7 +332,6 @@ _tsmmonitor_tool ()
 				Example:
 				    tsmmonitor db --help
 				    tsmmonitor db
-				    tsmmonitor db -v6
 				    tsmmonitor -m='user1@somewhere.com user2@somewhere.com' db
 				    tsmmonitor --servername=tsmsrv01 db
 				    tsmmonitor --servername=tsmsrv02 db 85 95
@@ -588,11 +589,8 @@ help ()
 #
 # Usage..: tsmmonitor db [options] [warning] [critical]
 #
-#	-v6	check database utilization for TSM version 6
-#
 # Example: tsmmonitor db
 #          tsmmonitor db 80 95
-#          tsmmonitor db -v6 80 90
 # ----------------------------------------------------------------------------
 db ()
 {
@@ -601,15 +599,11 @@ db ()
 	local tsm_output pct_utl
 	local status="OK"
 	local sql="SELECT pct_utilized FROM db"
-
-	# options parser
-	case $1 in
-		-v6 )
-			sql="SELECT CAST(SUM(100-(free_space_mb*100) / tot_file_system_mb) \
-AS DECIMAL(3,1)) AS PCT_UTILIZED FROM db"
-			shift
-		;;
-	esac
+    if [ $V6 -eq 1 ]
+    then
+        local sql="select sum(100-(free_space_mb*100) / tot_file_system_mb) as PCT_UTILIZED from db"
+    fi
+        
 
 	# Test if the parameters are numbers
 	if ! _tsmmonitor_tool is_number "$1" "$2"
@@ -641,11 +635,8 @@ AS DECIMAL(3,1)) AS PCT_UTILIZED FROM db"
 #
 # Usage..: tsmmonitor log [options] [warning] [critical]
 #
-#	-v6	check active log utilization for TSM version 6
-#
 # Example: tsmmonitor log
 #          tsmmonitor log 80 95
-#          tsmmonitor log -v6 70 80
 # ----------------------------------------------------------------------------
 log ()
 {
@@ -654,15 +645,11 @@ log ()
 	local tsm_output pct_utl
 	local status="OK"
 	local sql="SELECT pct_utilized FROM log"
-
-	# options parser
-	case $1 in
-		-v6 )
-			sql="SELECT CAST(SUM(used_space_mb *100 / total_space_MB) AS \
+    if [ $V6 -eq 1 ]
+    then
+        local sql="SELECT CAST(SUM(used_space_mb *100 / total_space_MB) AS \
 DECIMAL(3,1)) AS MAX_PCT_UTILIZED FROM log"
-			shift
-		;;
-	esac
+    fi
 
 	# Test if the parameters are numbers
 	if ! _tsmmonitor_tool is_number "$1" "$2"
