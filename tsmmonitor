@@ -667,7 +667,7 @@ DECIMAL(3,1)) AS MAX_PCT_UTILIZED FROM log"
 	[ "$pct_utl" -ge "${1:-$LOG_WARNING}"  ] && status="Warning"
 	[ "$pct_utl" -ge "${2:-$LOG_CRITICAL}" ] && status="Critical"
  
-	_tsmmonitor_tool myecho log "log utilization $pct_utl%, $status"
+	_tsmmonitor_tool myecho log "log utilization $pct_utl%, $status | 'log utilization'=$pct_utl%;$LOG_WARNING;$LOG_CRITICAL"
 }
 
 
